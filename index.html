@@ -2081,28 +2081,18 @@ function doRenderSetupInline(C){
         h('div',{style:{flex:1}},h('div',{style:{fontSize:'13px',fontWeight:600}},'Google 계정 인증'),
           h('div',{style:{fontSize:'11px',color:'var(--t3)'}},'새 창에서 Google 로그인 후 권한 허용'))),
       C.step===2?h('div',{style:{padding:'12px 0'}},
-        h('div',{style:{textAlign:'center',padding:'10px',color:'var(--t3)',fontSize:'12px'}},'새 창에서 Google 인증을 완료한 후 아래 버튼을 클릭하세요'),
-        h('button',{className:'btn btn-p',style:{width:'100%',justifyContent:'center',padding:'10px'},onClick:async()=>{
-          const st=await API.checkAuth();
-          if(st.authenticated){C.step=3;_('#root').replaceChildren(doRenderSetupInline(C));}
-          else{C.err='인증 미완료. Google 로그인을 완료해주세요.';_('#root').replaceChildren(doRenderSetupInline(C));}
-        }},'인증 확인')
+        h('div',{style:{padding:'12px',background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.25)',borderRadius:'8px',fontSize:'12.5px',color:'var(--t2)',lineHeight:'1.9',marginBottom:'10px'}},
+          '🔐 새 창에서 Google 인증을 완료하면 ',h('strong','스프레드시트 선택'),' 화면이 나타납니다.',h('br'),
+          '선택 완료 후 표시된 ',h('strong','환경변수 4개'),h('span',{style:{color:'var(--warn)'}},' (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,'),h('br'),
+          h('span',{style:{color:'var(--warn)'}},' GOOGLE_REFRESH_TOKEN, SPREADSHEET_ID)'),h('span',{style:{color:'var(--t2)'}},' 를 Vercel에 등록하세요.'),h('br'),
+          '등록 후 Vercel에서 ',h('strong','Redeploy'),' → 아래 버튼 클릭'),
+        h('button',{className:'btn btn-p',style:{width:'100%',justifyContent:'center',padding:'10px'},onClick:()=>{location.reload();}},'🔄 Redeploy 완료 후 새로고침')
       ):null,
       h('div',{className:'setup-step'+(C.step===3?' active':'')+(C.step>3?' done':'')},
-        h('div',{className:'step-num'},C.step>3?'✓':'3'),
+        h('div',{className:'step-num'},'3'),
         h('div',{style:{flex:1}},h('div',{style:{fontSize:'13px',fontWeight:600}},'스프레드시트 연결'),
-          h('div',{style:{fontSize:'11px',color:'var(--t3)'}},'새로 생성하거나 기존 시트 ID 입력'))),
-      C.step===3?h('div',{style:{padding:'12px 0'}},
-        h('div',{className:'fg'},h('label','스프레드시트 ID (빈칸이면 새로 생성)'),h('input',{className:'inp',placeholder:'선택사항',value:C.ssId,onInput:e=>{C.ssId=e.target.value;}})),
-        h('button',{className:'btn btn-p',style:{width:'100%',justifyContent:'center',padding:'10px'},onClick:async()=>{
-          C.loading=true;C.err='';_('#root').replaceChildren(doRenderSetupInline(C));
-          try{
-            const res=await API.setupSheet(C.ssId||null);
-            if(res.success){API.mode='sheets';await loadAllFromSheets();D._skipSetup=true;D.pg='dashboard';render();}
-            else{C.err=res.error||'설정 실패';C.loading=false;_('#root').replaceChildren(doRenderSetupInline(C));}
-          }catch(e){C.err='오류: '+e.message;C.loading=false;_('#root').replaceChildren(doRenderSetupInline(C));}
-        }},C.loading?'설정 중...':'스프레드시트 연결')
-      ):null,
+          h('div',{style:{fontSize:'11px',color:'var(--t3)'}},'새 창 안내에 따라 Vercel 환경변수 등록 후 Redeploy'))),
+      null,
       h('div',{style:{marginTop:'16px',textAlign:'center'}},
         h('button',{style:{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:'12px',textDecoration:'underline'},onClick:()=>{D._skipSetup=true;render();}},'나중에 설정하기 (로컬 모드로 계속)'))
     )
