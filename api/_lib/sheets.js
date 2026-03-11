@@ -2,7 +2,9 @@
 const { google } = require('googleapis');
 
 function getOAuth2() {
-  const { GOOGLE_CLIENT_ID: cid, GOOGLE_CLIENT_SECRET: cs, GOOGLE_REFRESH_TOKEN: rt } = process.env;
+  const cid = process.env.GOOGLE_CLIENT_ID?.trim();
+  const cs  = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  const rt  = process.env.GOOGLE_REFRESH_TOKEN?.trim();
   if (!cid || !cs || !rt) throw new Error('Google OAuth 환경변수가 설정되지 않았습니다.');
   const auth = new google.auth.OAuth2(cid, cs);
   auth.setCredentials({ refresh_token: rt });
@@ -16,7 +18,7 @@ function sheets() {
 function ssId() {
   const id = process.env.SPREADSHEET_ID;
   if (!id) throw new Error('SPREADSHEET_ID 환경변수가 설정되지 않았습니다.');
-  return id;
+  return id.trim();
 }
 
 /** 시트 전체 행을 객체 배열로 반환 */

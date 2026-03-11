@@ -37,14 +37,19 @@ module.exports = async (req, res) => {
       });
       spreadsheetId = resp.data.spreadsheetId;
 
-      // 헤더 초기화
+      // 헤더 + 기본 admin 유저 초기화
+      const now = new Date().toISOString();
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
         requestBody: {
           valueInputOption: 'RAW',
-          data: Object.entries(SHEET_HEADERS).map(([name, h]) => ({
-            range: `${name}!A1`, values: [h],
-          })),
+          data: [
+            ...Object.entries(SHEET_HEADERS).map(([name, h]) => ({
+              range: `${name}!A1`, values: [h],
+            })),
+            // 기본 관리자 계정
+            { range: 'Users!A2', values: [['u1', '관리자', 'admin', '1234', 'admin', 'true', now]] },
+          ],
         },
       });
     } else {
