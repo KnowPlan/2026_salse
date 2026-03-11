@@ -2,6 +2,30 @@
 const { google } = require('googleapis');
 
 module.exports = async (req, res) => {
+
+  // ── POST: in-app 설정 화면에서 호출 → {authUrl} JSON 반환 ──
+  if (req.method === 'POST') {
+    const { clientId, clientSecret } = req.body || {};
+    if (!clientId || !clientSecret) {
+      return res.status(400).json({ error: 'clientId와 clientSecret을 입력하세요.' });
+    }
+    const redirectUri = `https://${req.headers.host}/api/auth/callback`;
+    const auth = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    // state에 credentials 인코딩 (콜백에서 복원)
+    const state = Buffer.from(JSON.stringify({ clientId, clientSecret })).toString('base64');
+    const authUrl = auth.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file',
+      ],
+      prompt: 'consent',
+      state,
+    });
+    return res.json({ authUrl });
+  }
+
+  // ── GET: 브라우저에서 직접 접속 → Google OAuth 리다이렉트 ──
   const clientId     = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -16,13 +40,12 @@ h2{color:#fbbf24}code{background:#1c1c26;padding:2px 8px;border-radius:4px;font-
 <p>Vercel 대시보드에서 아래 두 항목을 먼저 등록하세요.</p>
 <p><code>GOOGLE_CLIENT_ID</code></p>
 <p><code>GOOGLE_CLIENT_SECRET</code></p>
-<p style="margin-top:20px;color:#9393a8;font-size:13px">
-  등록 후 Vercel에서 Redeploy → 이 페이지 새로고침하면 계속 진행됩니다.
-</p>
+<p style="margin-top:20px;color:#9393a8;font-size:13px">등록 후 Vercel에서 Redeploy → 이 페이지 새로고침하면 계속 진행됩니다.</p>
 </body></html>`);
   }
 
   const redirectUri = `https://${req.headers.host}/api/auth/callback`;
+  const state = Buffer.from(JSON.stringify({ clientId, clientSecret })).toString('base64');
   const auth = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
   const authUrl = auth.generateAuthUrl({
     access_type: 'offline',
@@ -31,8 +54,8 @@ h2{color:#fbbf24}code{background:#1c1c26;padding:2px 8px;border-radius:4px;font-
       'https://www.googleapis.com/auth/drive.file',
     ],
     prompt: 'consent',
+    state,
   });
-
   res.writeHead(302, { Location: authUrl });
   res.end();
 };
