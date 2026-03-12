@@ -2131,7 +2131,7 @@ async function init(){
   render(); // shows login screen
 }
 init();
-let _resizeT;window.addEventListener('resize',()=>{clearTimeout(_resizeT);_resizeT=setTimeout(()=>{if(D.loggedIn)render();},200);});
+let _resizeT;window.addEventListener('resize',()=>{clearTimeout(_resizeT);_resizeT=setTimeout(()=>{if(D.loggedIn&&!D.modal)render();},200);});
 
 </script>
 </body>
