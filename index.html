@@ -1572,9 +1572,10 @@ function renderModal(){
       h('div',{className:'mod-h'},h('h2',title),h('button',{className:'cx',onClick:close},'✕')),
       h('div',{className:'mod-b'},body),
       onSave?h('div',{className:'mod-f'},h('button',{className:'btn',onClick:close},'취소'),h('button',{className:'btn btn-p',onClick:onSave},'저장')):null));
-    // iOS: input 포커스 직후 keyboard 열리며 발생하는 spurious backdrop click 방지
-    o.addEventListener('focusin',()=>{m._lastFocusAt=Date.now();});
-    o.addEventListener('click',e=>{if(e.target===o&&(!m._lastFocusAt||Date.now()-m._lastFocusAt>300))close();});
+    // Android/iOS: pointerdown이 오버레이에서 시작된 경우에만 닫기 (키보드 오픈 시 레이아웃 이동으로 인한 오탐 방지)
+    let _pdOnBackdrop=false;
+    o.addEventListener('pointerdown',e=>{_pdOnBackdrop=e.target===o;});
+    o.addEventListener('click',e=>{if(e.target===o&&_pdOnBackdrop)close();});
     return o;};
   const fg=(label,input,req)=>h('div',{className:'fg'},h('label',label,req?h('span',{className:'rq'},' *'):null),input);
   const f={};const gf=k=>f[k]||'';
