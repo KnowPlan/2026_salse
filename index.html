@@ -1526,7 +1526,6 @@ function renderModal(){
     };
     return ov(isE?'영업 컨텍스트 수정':'영업 컨텍스트 등록',h('div',
       fg('영업연도',h('select',{className:'inp',onChange:e=>{mf.yr=e.target.value;}},...yrOpts.map(y=>h('option',{value:String(y),selected:String(y)===mf.yr},y+'년'))),1),
-      fg('고객사',mkAc(D.custs,'_custText','cid','고객사명 검색 또는 직접 입력...'),1),
       fg('솔루션',h('div',{style:{display:'flex',gap:'8px',flexWrap:'wrap'}},
         ...D.sols.map(s=>{
           const on=mf.sid===s.id;
@@ -1535,6 +1534,7 @@ function renderModal(){
           return btn;
         })
       ),1),
+      fg('고객사',mkAc(D.custs,'_custText','cid','고객사명 검색 또는 직접 입력...'),1),
       fg('협력사',mkAc(D.partners,'_ptText','pid','협력사명 검색 (없으면 공백)')),
       fg('담당자',h('select',{className:'inp',onChange:e=>{mf.oid=e.target.value;}},...D.users.map(u=>h('option',{value:u.id,selected:u.id===mf.oid},u.name)))),
       isE?fg('단계',h('select',{className:'inp',onChange:e=>{mf.stage=e.target.value;}},...STG.map(s=>h('option',{value:s.id,selected:s.id===mf.stage},s.i+' '+s.l)))):null,
