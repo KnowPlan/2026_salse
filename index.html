@@ -120,6 +120,14 @@ textarea.inp{resize:vertical;min-height:80px}
 .pp-action-bar{padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;background:var(--bg1);}
 .pp-action-bar .btn{min-height:40px;padding:8px 14px;font-size:13px;}
 @media(max-width:768px){.pp-action-bar{padding:14px 16px;gap:10px;}.pp-action-bar .btn{flex:1;justify-content:center;min-height:44px;font-size:13.5px;}}
+/* 모바일 헤더 등록 버튼 개선 */
+@media(max-width:768px){
+  .mh{flex-wrap:wrap;padding:10px 14px;gap:8px;min-height:auto;}
+  .mh h1{flex:1;}
+  .mh-reg{order:99;width:100%;min-height:46px;font-size:14px;justify-content:center;padding:10px 16px;border-radius:8px;}
+  .mh-filters{order:5;width:100%;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap!important;padding-bottom:2px;}
+  .mh-filters .inp{flex-shrink:0;}
+}
 
 @media(max-width:900px){
   .pipe-panel.open{width:100%!important;min-width:0!important;position:fixed;inset:0;z-index:300;border-left:none;}
@@ -843,7 +851,7 @@ function pgSList(){
   // ── 헤더 ──
   const header=h('div',{className:'mh'},
     h('h1','☰ 영업 목록'),
-    h('div',{className:'fc',style:{gap:'8px',flexWrap:'wrap'}},
+    h('div',{className:'fc mh-filters',style:{gap:'8px',flexWrap:'wrap'}},
       mkSolSel(),
       h('select',{className:'inp',style:{width:'auto',padding:'4px 8px',fontSize:'12px'},onChange:e=>{D.pipeYear=e.target.value?Number(e.target.value):null;D.pipePanel=null;render();}},
         h('option',{value:'',selected:!yr},'전체 연도'),...yrArr.map(y=>h('option',{value:String(y),selected:yr===y},y+'년'))),
@@ -852,8 +860,8 @@ function pgSList(){
       h('select',{className:'inp',style:{width:'auto',padding:'4px 8px',fontSize:'12px'},onChange:e=>{D.slistOwner=e.target.value||null;D.pipePanel=null;render();}},
         h('option',{value:'',selected:!ownerFilter},'전체 담당자'),
         ...D.users.map(u=>h('option',{value:u.id,selected:ownerFilter===u.id},u.name))),
-      h('span',{style:{fontSize:'12px',color:'var(--t3)'}},'총 '+sc.length+'건'),
-      h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'context',sid:D.solFilter||null};render();}},'+ 영업 등록')));
+      h('span',{style:{fontSize:'12px',color:'var(--t3)'}},'총 '+sc.length+'건')),
+    h('button',{className:'btn btn-p btn-s mh-reg',onClick:()=>{D.modal={type:'context',sid:D.solFilter||null};render();}},'+ 영업 등록'));
 
   // ── 그리드 테이블 ──
   const tbody=h('tbody');
@@ -916,9 +924,8 @@ function pgTL(mode){
   return h('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
     h('div',{className:'mh'},
       h('h1',mode==='all'?'📅 히스토리':'✎ 활동'),
-      h('div',{className:'fc',style:{gap:'8px'}},
-        useSolFilter?mkSolSel():null,
-        h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'activity',sid:sf};render();}},'+ 활동 기록'))),
+      useSolFilter?h('div',{className:'fc mh-filters',style:{gap:'8px'}},mkSolSel()):null,
+      h('button',{className:'btn btn-p btn-s mh-reg',onClick:()=>{D.modal={type:'activity',sid:sf};render();}},'+ 활동 기록')),
     h('div',{className:'mb'},h('div',{className:'tl'},
       ...acts.map(a=>{const ctx=D.ctxs.find(c=>c.id===a.scid),cu=ctx?D.custs.find(c=>c.id===ctx.cid):null,sl=ctx?gS(ctx.sid):null;
         return h('div',{className:'tli'},h('div',{className:'tld',style:{borderColor:sl?.color||'var(--bd2)'}}),
@@ -941,7 +948,7 @@ function pgTL(mode){
 // ═══ CUSTOMERS ═══
 function pgCusts(){
   return h('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
-    h('div',{className:'mh'},h('h1','🏢 고객관리'),h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'customer'};render();}},'+ 고객 등록')),
+    h('div',{className:'mh'},h('h1','🏢 고객관리'),h('button',{className:'btn btn-p btn-s mh-reg',onClick:()=>{D.modal={type:'customer'};render();}},'+ 고객 등록')),
     h('div',{className:'mb'},h('div',{className:'dt-wrap'},h('table',{className:'dt'},
       h('thead',h('tr',...['회사명','담당자','연락처','구분','솔루션','등록일','관리'].map(t=>h('th',t)))),
       h('tbody',...D.custs.map(c=>{const cc=D.ctxs.filter(x=>x.cid===c.id);
@@ -965,7 +972,7 @@ function pgCusts(){
 const PT={SI:'SI',리셀러:'리셀러',총판:'총판',기타:'기타'};
 function pgPartners(){
   return h('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
-    h('div',{className:'mh'},h('h1','🤝 협력사'),h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'partner'};render();}},'+ 협력사 등록')),
+    h('div',{className:'mh'},h('h1','🤝 협력사'),h('button',{className:'btn btn-p btn-s mh-reg',onClick:()=>{D.modal={type:'partner'};render();}},'+ 협력사 등록')),
     h('div',{className:'mb'},h('div',{className:'dt-wrap'},h('table',{className:'dt'},
       h('thead',h('tr',...['회사명','담당자','연락처','구분','등록일','관리'].map(t=>h('th',t)))),
       h('tbody',...D.partners.map(p=>{
@@ -1075,7 +1082,7 @@ function pgCts(mode){
   return h('div',{style:{display:'flex',flexDirection:'column',height:'100%'}},
     h('div',{className:'mh'},
       h('h1',mode==='all'?'📋 계약/매출':'📝 계약'),
-      h('div',{className:'fc',style:{gap:'8px'}},
+      h('div',{className:'fc mh-filters',style:{gap:'8px'}},
         useSolFilter?mkSolSel():null,
         h('select',{className:'inp',style:{width:'auto',padding:'4px 8px',fontSize:'12px'},onChange:e=>{D._ctsYr=e.target.value||'';render();}},
           h('option',{value:'',selected:!yr},'전체 연도'),...yrArr.map(y=>h('option',{value:y,selected:y===yr},y+'년'))))),
