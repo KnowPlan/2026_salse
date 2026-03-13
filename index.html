@@ -118,6 +118,8 @@ textarea.inp{resize:vertical;min-height:80px}
 .pp-stg-btn.cur{border-color:var(--ac);background:rgba(99,102,241,.15);color:#a5b4fc;}
 .pp-stg-btn:hover:not(.cur){border-color:var(--bd2);color:var(--t1);}
 .pp-action-bar{padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;background:var(--bg1);}
+.pp-action-bar .btn{min-height:40px;padding:8px 14px;font-size:13px;}
+@media(max-width:768px){.pp-action-bar{padding:14px 16px;gap:10px;}.pp-action-bar .btn{flex:1;justify-content:center;min-height:44px;font-size:13.5px;}}
 
 @media(max-width:900px){
   .pipe-panel.open{width:100%!important;min-width:0!important;position:fixed;inset:0;z-index:300;border-left:none;}
@@ -645,9 +647,7 @@ function renderPipePanel(ctx){
     h('h3',
       sol?h('span',{style:{width:'8px',height:'8px',borderRadius:'50%',background:sol.color,display:'inline-block',flexShrink:0}}):null,
       ' '+(cu?.name||'?')),
-    h('div',{className:'fc',style:{gap:'6px'}},
-      h('button',{className:'btn btn-s',style:{fontSize:'11px',padding:'3px 8px'},onClick:()=>{nav('custd',{cust:ctx.cid});}},'🔗 상세'),
-      h('button',{className:'cx',style:{fontSize:'16px'},onClick:()=>{D.pipePanel=null;render();}},'✕'))));
+    h('button',{className:'cx',style:{fontSize:'16px'},onClick:()=>{D.pipePanel=null;render();}},'✕')));
 
   // 탭
   const tabEl=h('div',{className:'pp-tabs',style:{padding:'0 16px',flexShrink:0}});
@@ -813,9 +813,10 @@ function renderPipePanel(ctx){
 
   // 액션 바
   panel.appendChild(h('div',{className:'pp-action-bar'},
-    h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'activity',scidFixed:ctx.id};render();}},'📋 활동기록'),
-    h('button',{className:'btn btn-s',onClick:()=>{D.modal={type:'ctxedit',data:{...ctx}};render();}},'✏️ 수정'),
-    h('button',{className:'btn btn-s',style:{marginLeft:'auto'},onClick:()=>nav('custd',{cust:ctx.cid})},'🔗 고객상세')));
+    h('button',{className:'btn btn-p',onClick:()=>{D.modal={type:'activity',scidFixed:ctx.id};render();}},'📋 활동기록'),
+    h('button',{className:'btn',onClick:()=>{D.modal={type:'ctxedit',data:{...ctx}};render();}},'✏️ 수정'),
+    h('button',{className:'btn',style:{marginLeft:'auto'},onClick:()=>nav('custd',{cust:ctx.cid})},'🏢 고객상세'),
+    h('button',{className:'btn',onClick:()=>{D.pg='custd';D.sc=ctx.cid;D.ctab='sales';D.pipePanel=null;D._mobSbOpen=false;render();}},'📄 영업상세')));
 
   return panel;
 }
