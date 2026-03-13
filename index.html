@@ -833,7 +833,10 @@ function renderPipePanel(ctx){
 // ═══ SALES LIST (통합 그리드 + 우측 패널) ═══
 function pgSList(){
   // 담당자 필터 초기값: 현재 로그인 사용자 (페이지 최초 진입 시 한 번만)
-  if(D.slistOwner===undefined && D.curUser?.id) D.slistOwner=D.curUser.id;
+  if(D.slistOwner===undefined){
+    const isAdmin=D.curUser?.role==='admin';
+    D.slistOwner=isAdmin?null:(D.curUser?.id||null);
+  }
   const yr=D.pipeYear;
   const years=new Set();D.ctxs.forEach(c=>{if(c.yr){const y=Number(c.yr);if(!isNaN(y))years.add(y);}});
   years.add(new Date().getFullYear());const yrArr=[...years].sort((a,b)=>b-a);
@@ -860,7 +863,7 @@ function pgSList(){
         h('option',{value:'',selected:!stgFilter},'전체 단계'),...getSTG().map(s=>h('option',{value:s.id,selected:stgFilter===s.id},s.i+' '+s.l))),
       h('select',{className:'inp',style:{width:'auto',padding:'4px 8px',fontSize:'12px'},onChange:e=>{D.slistOwner=e.target.value||null;D.pipePanel=null;render();}},
         h('option',{value:'',selected:!ownerFilter},'전체 담당자'),
-        ...D.users.map(u=>h('option',{value:u.id,selected:ownerFilter===u.id},u.name))),
+        ...D.users.filter(u=>u.role==='sales').map(u=>h('option',{value:u.id,selected:ownerFilter===u.id},u.name))),
       h('span',{style:{fontSize:'12px',color:'var(--t3)'}},'총 '+sc.length+'건')),
     h('button',{className:'btn btn-p btn-s mh-reg',onClick:()=>{D.modal={type:'context',sid:D.solFilter||null};render();}},'+ 영업 등록'));
 
