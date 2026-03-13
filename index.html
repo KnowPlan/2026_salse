@@ -815,8 +815,7 @@ function renderPipePanel(ctx){
   panel.appendChild(h('div',{className:'pp-action-bar'},
     h('button',{className:'btn btn-p',onClick:()=>{D.modal={type:'activity',scidFixed:ctx.id};render();}},'📋 활동기록'),
     h('button',{className:'btn',onClick:()=>{D.modal={type:'ctxedit',data:{...ctx}};render();}},'✏️ 수정'),
-    h('button',{className:'btn',style:{marginLeft:'auto'},onClick:()=>nav('custd',{cust:ctx.cid})},'🏢 고객상세'),
-    h('button',{className:'btn',onClick:()=>{D.pg='custd';D.sc=ctx.cid;D.ctab='sales';D.pipePanel=null;D._mobSbOpen=false;render();}},'📄 영업상세')));
+    h('button',{className:'btn',style:{marginLeft:'auto'},onClick:()=>nav('custd',{cust:ctx.cid})},'🏢 고객상세')));
 
   return panel;
 }
