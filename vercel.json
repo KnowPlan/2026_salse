@@ -5,6 +5,7 @@
   ],
   "functions": {
     "api/upload.js": { "maxDuration": 30 },
-    "api/attachments.js": { "maxDuration": 15 }
+    "api/attachments.js": { "maxDuration": 15 },
+    "api/quotes/send.js": { "maxDuration": 30 }
   }
 }
