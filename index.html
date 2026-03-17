@@ -434,6 +434,7 @@ var D={
   loggedIn:false,curUser:null,loginErr:'',
   sq:'',sf:'all',pipeYear:new Date().getFullYear(),
   pipePanel:null,ppTab:'acts',
+  _paf:null,  // 패널 인라인 활동 입력 폼 상태
   solFilter:null,slistStg:null,slistOwner:undefined  // 영업목록/공통 필터 상태
 };
 
@@ -761,21 +762,80 @@ function renderPipePanel(ctx){
   }
 
   if(tab==='acts'){
-    body.appendChild(h('div',{className:'fc',style:{marginBottom:'12px',justifyContent:'flex-end'}},
-      h('button',{className:'btn btn-p btn-s',onClick:()=>{D.modal={type:'activity',scidFixed:ctx.id};render();}},'+ 활동 기록')));
+    // ── 인라인 활동 입력 폼 ──
+    if(!D._paf)D._paf={type:(D.actTypes?.[0]?.id||''),date:new Date().toISOString().slice(0,10),ct:'',statusChange:''};
+    const pf=D._paf;
+    // 활동 유형 선택 시 autoStatus 자동 반영
+    const curAt=getActType(pf.type);
+    const pContacts=ctx.pid?D.pcontacts.filter(c=>c.pid===ctx.pid&&c.status!=='inactive'):[];
+
+    const inlineForm=h('div',{style:{background:'var(--bg0)',border:'1px solid var(--bd)',borderRadius:'10px',padding:'12px',marginBottom:'16px'}});
+
+    // 행1: 유형 + 날짜
+    const row1=h('div',{style:{display:'flex',gap:'6px',marginBottom:'8px'}});
+    const typeSel=h('select',{style:{flex:'1',padding:'6px 8px',fontSize:'12px',borderRadius:'6px',border:'1px solid var(--bd)',background:'var(--bg3)',color:'var(--t1)'}});
+    (D.actTypes||[]).forEach(t=>{
+      const o=h('option',{value:t.id},t.emoji+' '+t.name);
+      if(t.id===pf.type)o.selected=true;
+      typeSel.appendChild(o);
+    });
+    typeSel.addEventListener('change',e=>{
+      pf.type=e.target.value;
+      const at=getActType(pf.type);
+      pf.statusChange=at?.autoStatus||'';
+      render();
+    });
+    const dateInp=h('input',{type:'date',value:pf.date,style:{width:'130px',padding:'6px 8px',fontSize:'12px',borderRadius:'6px',border:'1px solid var(--bd)',background:'var(--bg3)',color:'var(--t1)'}});
+    dateInp.addEventListener('change',e=>{pf.date=e.target.value;});
+    row1.appendChild(typeSel);row1.appendChild(dateInp);
+    inlineForm.appendChild(row1);
+
+    // 행2: 메모
+    const memo=h('textarea',{placeholder:'메모를 입력하세요 *',style:{width:'100%',minHeight:'70px',padding:'7px 9px',fontSize:'12px',borderRadius:'6px',border:'1px solid var(--bd)',background:'var(--bg3)',color:'var(--t1)',resize:'vertical',boxSizing:'border-box',fontFamily:'inherit',lineHeight:'1.5'}});
+    memo.value=pf.ct||'';
+    memo.addEventListener('input',e=>{pf.ct=e.target.value;});
+    inlineForm.appendChild(memo);
+
+    // 행3: 상태변경 + 저장 버튼
+    const row3=h('div',{style:{display:'flex',gap:'6px',marginTop:'8px',alignItems:'center'}});
+    const stSel=h('select',{style:{flex:'1',padding:'6px 8px',fontSize:'12px',borderRadius:'6px',border:'1px solid var(--bd)',background:'var(--bg3)',color:'var(--t1)'}});
+    h('option',{value:''},'상태 변경 안 함').selected=!pf.statusChange;
+    stSel.appendChild(h('option',{value:''},'상태 변경 안 함'));
+    SALE_STATUS_LIST.forEach(k=>{
+      const s=SALE_STATUS[k];
+      const o=h('option',{value:k},s.i+' '+s.l);
+      if(k===pf.statusChange)o.selected=true;
+      stSel.appendChild(o);
+    });
+    stSel.addEventListener('change',e=>{pf.statusChange=e.target.value;});
+    const saveBtn=h('button',{style:{padding:'6px 14px',fontSize:'12px',fontWeight:600,borderRadius:'6px',border:'none',background:'var(--ac)',color:'#fff',cursor:'pointer',whiteSpace:'nowrap'}},'기록');
+    saveBtn.addEventListener('click',()=>{
+      if(!pf.ct.trim()){toast('메모를 입력하세요');memo.focus();return;}
+      const at=getActType(pf.type)||{name:'활동',emoji:'📌'};
+      const ca=pf.date+'T'+new Date().toTimeString().slice(0,8);
+      const na={id:uid(),scid:ctx.id,type:pf.type,title:at.emoji+' '+at.name,ct:pf.ct.trim(),pcid:'',oid:D.curUser?.id||'u1',ca};
+      D.acts.unshift(na);syncToSheet('acts',na);
+      if(pf.statusChange){ctx.stage=pf.statusChange;syncUpdateSheet('ctxs',ctx.id,ctx);}
+      D._paf={type:pf.type,date:new Date().toISOString().slice(0,10),ct:'',statusChange:getActType(pf.type)?.autoStatus||''};
+      toast('활동 기록 완료');render();
+    });
+    row3.appendChild(stSel);row3.appendChild(saveBtn);
+    inlineForm.appendChild(row3);
+    body.appendChild(inlineForm);
+
+    // ── 활동 목록 ──
     if(acts.length===0){
-      body.appendChild(h('div',{style:{textAlign:'center',padding:'30px',color:'var(--t3)'}},'📭 활동 없음'));
+      body.appendChild(h('div',{style:{textAlign:'center',padding:'20px',color:'var(--t3)',fontSize:'12px'}},'📭 활동 없음'));
     } else {
       acts.forEach(a=>{
         const actCard=h('div',{style:{background:'var(--bg3)',border:'1px solid var(--bd)',borderRadius:'8px',padding:'12px',marginBottom:'8px'}},
           h('div',{style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}},
             h('span',{style:{fontSize:'11px',fontWeight:600,padding:'2px 8px',borderRadius:'4px',background:'rgba(255,255,255,.06)',color:'var(--t2)'}},getActLabel(a.type)[0]+' '+getActLabel(a.type)[1]),
             h('span',{style:{fontSize:'11px',color:'var(--t3)',marginLeft:'auto'}},fmtDT(a.ca))),
-          h('div',{style:{fontSize:'13px',fontWeight:600,marginBottom:'4px'}},a.title),
           a.ct?h('div',{style:{fontSize:'12px',color:'var(--t2)',lineHeight:'1.5',marginBottom:'6px',whiteSpace:'pre-wrap'}},a.ct):null,
           h('div',{style:{display:'flex',gap:'6px',justifyContent:'flex-end'}},
             h('button',{className:'btn btn-s',style:{fontSize:'10px',padding:'2px 6px'},onClick:()=>{D.modal={type:'actedit',data:{...a}};render();}},'✏️ 수정'),
-            h('button',{className:'btn btn-s btn-d',style:{fontSize:'10px',padding:'2px 6px'},onClick:async()=>{if(!confirm(a.title+' 삭제?'))return;D.acts=D.acts.filter(x=>x.id!==a.id);toast('삭제');render();}},'🗑')));
+            h('button',{className:'btn btn-s btn-d',style:{fontSize:'10px',padding:'2px 6px'},onClick:async()=>{if(!confirm('삭제할까요?'))return;D.acts=D.acts.filter(x=>x.id!==a.id);toast('삭제');render();syncDeleteSheet('acts',a.id);}},'🗑')));
         body.appendChild(actCard);
       });
     }
@@ -832,7 +892,7 @@ function renderPipePanel(ctx){
 
   // 액션 바
   panel.appendChild(h('div',{className:'pp-action-bar'},
-    h('button',{className:'btn btn-p',onClick:()=>{D.modal={type:'activity',scidFixed:ctx.id};render();}},'📋 활동기록'),
+    h('button',{className:'btn btn-p',onClick:()=>{D.ppTab='acts';D._paf=null;render();}},'📋 활동'),
     h('button',{className:'btn',style:{marginLeft:'auto'},onClick:()=>nav('custd',{cust:ctx.cid})},'🏢 고객상세')));
 
   return panel;
@@ -894,7 +954,9 @@ function pgSList(){
       h('td',{style:{fontSize:'12px'}},fmtD(ctx.ecd)),
       h('td',{className:'col-desc',style:{color:'var(--t2)',maxWidth:'160px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},ctx.desc||''));
     tr.addEventListener('click',()=>{
-      D.pipePanel=D.pipePanel===ctx.id?null:ctx.id;
+      const nextId=D.pipePanel===ctx.id?null:ctx.id;
+      if(nextId!==D.pipePanel)D._paf=null; // 다른 영업 선택 시 폼 초기화
+      D.pipePanel=nextId;
       D.ppTab='acts';
       render();
     });
@@ -1674,65 +1736,56 @@ function renderModal(){
       addAct(id,'CUSTOMER_CREATED','영업 컨텍스트 생성',mf.desc||'');close();toast('등록 완료');}
     });}
 
-  // Activity
+  // Activity (modal — 영업 목록 외부에서 활동 기록 시)
   if(m.type==='activity'){
     const yrOpts=[];for(let y=new Date().getFullYear()+1;y>=2020;y--)yrOpts.push(y);
     if(!m._yr)m._yr=String(new Date().getFullYear());
+    // m._f 로 폼 상태 영속 (render() 재호출 시 초기화 방지)
+    if(!m._f)m._f={scid:m.scidFixed||'',pcid:'',type:(D.actTypes?.[0]?.id||''),date:new Date().toISOString().slice(0,10),ct:'',statusChange:''};
+    const mf=m._f;
+    // actType 자동 상태 반영 (최초 선택 시 or 유형 변경 시)
+    const curAt=getActType(mf.type);
+    if(curAt?.autoStatus&&!m._stOvr)mf.statusChange=curAt.autoStatus;
     const baseCtxL=m.scidFixed?D.ctxs.filter(c=>c.id===m.scidFixed):m.sid?D.ctxs.filter(c=>c.sid===m.sid):D.ctxs;
     const ctxL=m.scidFixed?baseCtxL:(m._yr?baseCtxL.filter(c=>c.yr===m._yr):baseCtxL);
-    if(m.scidFixed&&!f.scid)f.scid=m.scidFixed;
-    if(!f.date)f.date=new Date().toISOString().slice(0,10);
-    if(!f.type&&D.actTypes?.length)f.type=D.actTypes[0].id;
-    // 선택된 actType의 autoStatus 자동반영
-    const curAt=getActType(f.type);
-    if(curAt?.autoStatus&&!m._statusOverridden)f.statusChange=curAt.autoStatus;
-    // 선택된 컨텍스트의 협력사 담당자
-    const curScid=m.scidFixed||f.scid;
-    const curCtx=curScid?D.ctxs.find(c=>c.id===curScid):null;
+    const curCtx=D.ctxs.find(c=>c.id===(m.scidFixed||mf.scid));
     const actPContacts=curCtx?.pid?D.pcontacts.filter(c=>c.pid===curCtx.pid&&c.status!=='inactive'):[];
     return ov('활동 기록',h('div',
       // 영업 컨텍스트
-      m.scidFixed?null:fg('영업연도',h('select',{className:'inp',onChange:e=>{m._yr=e.target.value;f.scid='';f.pcid='';render();}},h('option',{value:''},'전체'),...yrOpts.map(y=>h('option',{value:String(y),selected:String(y)===m._yr},y+'년'))),1),
+      m.scidFixed?null:fg('영업연도',h('select',{className:'inp',onChange:e=>{m._yr=e.target.value;mf.scid='';mf.pcid='';render();}},h('option',{value:''},'전체'),...yrOpts.map(y=>h('option',{value:String(y),selected:String(y)===m._yr},y+'년'))),1),
       m.scidFixed?h('div',{className:'fg'},h('label','영업 컨텍스트'),h('div',{style:{padding:'8px 12px',background:'var(--bg0)',borderRadius:'6px',border:'1px solid var(--bd)',fontSize:'13px',color:'var(--t2)'}},function(){const ctx=D.ctxs.find(c=>c.id===m.scidFixed);const cu=D.custs.find(c=>c.id===ctx?.cid);const sol=gS(ctx?.sid);return (cu?.name||'?')+' - '+(sol?.name||'?');}())):
-      fg('영업 컨텍스트',h('select',{className:'inp',onChange:e=>{f.scid=e.target.value;f.pcid='';render();}},h('option',{value:''},'선택...'),...ctxL.map(ctx=>{const c=D.custs.find(x=>x.id===ctx.cid),s=gS(ctx.sid);return h('option',{value:ctx.id,selected:ctx.id===f.scid},(c?.name||'?')+' - '+(s?.name||'?'));})),1),
-      // 날짜 (필수)
-      fg('날짜',h('input',{className:'inp',type:'date',value:f.date,onInput:e=>{f.date=e.target.value;}}),1),
-      // 활동 유형 (필수) - D.actTypes 기반
+      fg('영업 컨텍스트',h('select',{className:'inp',onChange:e=>{mf.scid=e.target.value;mf.pcid='';render();}},h('option',{value:''},'선택...'),...ctxL.map(ctx=>{const c=D.custs.find(x=>x.id===ctx.cid),s=gS(ctx.sid);return h('option',{value:ctx.id,selected:ctx.id===mf.scid},(c?.name||'?')+' - '+(s?.name||'?'));})),1),
+      // 날짜
+      fg('날짜',h('input',{className:'inp',type:'date',value:mf.date,onChange:e=>{mf.date=e.target.value;}}),1),
+      // 활동 유형
       fg('활동 유형',h('select',{className:'inp',onChange:e=>{
-        f.type=e.target.value;
-        const at=getActType(f.type);
-        if(at?.autoStatus){f.statusChange=at.autoStatus;m._statusOverridden=false;}
-        else{f.statusChange='';m._statusOverridden=false;}
+        mf.type=e.target.value;
+        const at=getActType(mf.type);
+        mf.statusChange=at?.autoStatus||'';m._stOvr=false;
         render();
       }},
-        ...(D.actTypes||[]).map(t=>h('option',{value:t.id,selected:t.id===f.type},t.emoji+' '+t.name))
+        ...(D.actTypes||[]).map(t=>h('option',{value:t.id,selected:t.id===mf.type},t.emoji+' '+t.name))
       ),1),
-      // 협력사 담당자 (선택)
-      actPContacts.length>0?fg('협력사 담당자',h('select',{className:'inp',onChange:e=>{f.pcid=e.target.value;}},
+      // 협력사 담당자
+      actPContacts.length>0?fg('협력사 담당자',h('select',{className:'inp',onChange:e=>{mf.pcid=e.target.value;}},
         h('option',{value:''},'담당자 선택 (선택사항)'),
-        ...actPContacts.map(c=>h('option',{value:c.id,selected:c.id===f.pcid},[c.name,c.pos,c.dept].filter(Boolean).join(' · ')))
+        ...actPContacts.map(c=>h('option',{value:c.id,selected:c.id===mf.pcid},[c.name,c.pos,c.dept].filter(Boolean).join(' · ')))
       )):null,
       // 메모 (필수)
-      fg('메모',h('textarea',{className:'inp',style:{minHeight:'90px'},placeholder:'활동 내용을 입력하세요',onInput:e=>{f.ct=e.target.value;}}),1),
+      fg('메모',h('textarea',{className:'inp',style:{minHeight:'90px'},placeholder:'활동 내용을 입력하세요',onInput:e=>{mf.ct=e.target.value;},value:mf.ct}),1),
       // 상태 변경 (선택)
-      fg('상태 변경',h('select',{className:'inp',onChange:e=>{f.statusChange=e.target.value;m._statusOverridden=true;}},
-        h('option',{value:'',selected:!f.statusChange},'변경 안 함'),
-        ...SALE_STATUS_LIST.map(k=>{const s=SALE_STATUS[k];return h('option',{value:k,selected:f.statusChange===k},s.i+' '+s.l);})
+      fg('상태 변경',h('select',{className:'inp',onChange:e=>{mf.statusChange=e.target.value;m._stOvr=true;}},
+        h('option',{value:'',selected:!mf.statusChange},'변경 안 함'),
+        ...SALE_STATUS_LIST.map(k=>{const s=SALE_STATUS[k];return h('option',{value:k,selected:mf.statusChange===k},s.i+' '+s.l);})
       ))
     ),()=>{
-      const scid=m.scidFixed||f.scid;
-      if(!scid||!f.ct){toast('영업 컨텍스트와 메모는 필수입니다');return;}
-      const at=getActType(f.type)||{name:'활동',emoji:'📌'};
-      const dateStr=f.date||new Date().toISOString().slice(0,10);
-      const autoTitle=at.emoji+' '+at.name;
-      const ca=dateStr+'T'+new Date().toTimeString().slice(0,8);
-      var na={id:uid(),scid,type:f.type||(D.actTypes?.[0]?.id||''),title:autoTitle,ct:f.ct||'',pcid:f.pcid||'',oid:D.curUser?.id||'u1',ca};
+      const scid=m.scidFixed||mf.scid;
+      if(!scid||!mf.ct){toast('영업 컨텍스트와 메모는 필수입니다');return;}
+      const at=getActType(mf.type)||{name:'활동',emoji:'📌'};
+      const ca=(mf.date||new Date().toISOString().slice(0,10))+'T'+new Date().toTimeString().slice(0,8);
+      const na={id:uid(),scid,type:mf.type,title:at.emoji+' '+at.name,ct:mf.ct,pcid:mf.pcid||'',oid:D.curUser?.id||'u1',ca};
       D.acts.unshift(na);syncToSheet('acts',na);
-      // 상태 변경 적용
-      if(f.statusChange){
-        const ctx=D.ctxs.find(c=>c.id===scid);
-        if(ctx){ctx.stage=f.statusChange;syncUpdateSheet('ctxs',ctx.id,ctx);}
-      }
+      if(mf.statusChange){const ctx=D.ctxs.find(c=>c.id===scid);if(ctx){ctx.stage=mf.statusChange;syncUpdateSheet('ctxs',ctx.id,ctx);}}
       close();toast('기록 완료');
     });}
 
