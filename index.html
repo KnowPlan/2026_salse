@@ -327,6 +327,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:po
 // ═══════════════════════════════════
 const _=s=>document.querySelector(s);
 const h=(t,a,...ch)=>{if(typeof a==='string'||Array.isArray(a)||a instanceof HTMLElement){ch.unshift(a);a={};}const el=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k.startsWith('on')&&typeof v==='function')el.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(el.style,v);else if(k==='className')el.className=v;else if(k==='draggable')el.draggable=v;else if(k==='selected')el.selected=v;else if(k==='value')el.value=v;else el.setAttribute(k,v);});ch.flat(Infinity).forEach(c=>{if(c==null||c===false)return;if(typeof c==='string'||typeof c==='number')el.appendChild(document.createTextNode(c));else if(c instanceof HTMLElement)el.appendChild(c);});return el;};
+// 영문 전용 입력 헬퍼: 한글 자동 제거 + data-lang="en" 마킹
+const stripKo=v=>v.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g,'');
+const engOnly=(fn)=>e=>{const v=stripKo(e.target.value);e.target.value=v;if(fn)fn(v,e);};
 const uid=()=>Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,5);
 const now=()=>new Date().toISOString();
 const fmt=n=>new Intl.NumberFormat('ko-KR').format(Number(n)||0);
@@ -541,10 +544,10 @@ function renderLogin(){
       h('h1','영업관리 시스템'),
       h('div',{className:'sub'},'로그인하여 시스템에 접속하세요'),
       D.loginErr?h('div',{className:'login-err'},D.loginErr):null,
-      h('div',{className:'fg'},h('label','아이디'),h('input',{className:'inp',placeholder:'아이디를 입력하세요',inputMode:'text',autocapitalize:'off',style:{imeMode:'disabled'},onInput:e=>{f.id=e.target.value;},onKeyDown:e=>{if(e.key==='Enter')doLogin();}})),
+      h('div',{className:'fg'},h('label','아이디'),h('input',{className:'inp',placeholder:'아이디를 입력하세요','data-lang':'en',autocomplete:'username',autocapitalize:'off',autocorrect:'off',onInput:engOnly(v=>{f.id=v;}),onKeyDown:e=>{if(e.key==='Enter')doLogin();}})),
       h('div',{className:'fg'},h('label','비밀번호'),
         h('div',{className:'pw-wrap'},
-          h('input',{className:'inp',type:f.showPw?'text':'password',placeholder:'비밀번호를 입력하세요',inputMode:'text',autocapitalize:'off',style:{paddingRight:'36px',imeMode:'disabled'},onInput:e=>{f.pw=e.target.value;},onKeyDown:e=>{if(e.key==='Enter')doLogin();}}),
+          h('input',{className:'inp',type:f.showPw?'text':'password',placeholder:'비밀번호를 입력하세요','data-lang':'en',autocomplete:'current-password',autocapitalize:'off',autocorrect:'off',style:{paddingRight:'36px'},onInput:engOnly(v=>{f.pw=v;}),onKeyDown:e=>{if(e.key==='Enter')doLogin();}}),
           h('button',{className:'pw-tog',onClick:()=>{f.showPw=!f.showPw;render();}},f.showPw?'🙈':'👁️'))),
       h('button',{className:'btn btn-p',style:{width:'100%',justifyContent:'center',padding:'10px',fontSize:'14px',marginTop:'8px'},onClick:doLogin},'로그인')
     )
@@ -1866,10 +1869,10 @@ function renderModal(){
     Object.assign(f,{name:'',loginId:'',pw:'',role:'sales'});
     return ov('사용자 추가',h('div',
       fg('이름',h('input',{className:'inp',onInput:e=>{f.name=e.target.value;}}),1),
-      fg('로그인 ID',h('input',{className:'inp',placeholder:'영문/숫자',onInput:e=>{f.loginId=e.target.value;}}),1),
-      fg('비밀번호',h('input',{className:'inp',type:'password',onInput:e=>{f.pw=e.target.value;}}),1),
-      fg('비밀번호 확인',h('input',{className:'inp',type:'password',onInput:e=>{f.pw2=e.target.value;}}),1),
-      fg('이메일',h('input',{className:'inp',type:'email',placeholder:'user@example.com',onInput:e=>{f.email=e.target.value;}})),
+      fg('로그인 ID',h('input',{className:'inp',placeholder:'영문/숫자','data-lang':'en',autocomplete:'username',autocapitalize:'off',autocorrect:'off',onInput:engOnly(v=>{f.loginId=v;})}),1),
+      fg('비밀번호',h('input',{className:'inp',type:'password','data-lang':'en',autocomplete:'new-password',autocapitalize:'off',onInput:engOnly(v=>{f.pw=v;})}),1),
+      fg('비밀번호 확인',h('input',{className:'inp',type:'password','data-lang':'en',autocomplete:'new-password',autocapitalize:'off',onInput:engOnly(v=>{f.pw2=v;})}),1),
+      fg('이메일',h('input',{className:'inp',type:'email',placeholder:'user@example.com','data-lang':'en',onInput:e=>{f.email=e.target.value;}})),
       fg('권한',h('select',{className:'inp',onChange:e=>{f.role=e.target.value;}},h('option',{value:'admin'},'관리자'),h('option',{value:'sales',selected:true},'영업담당자')))
     ),()=>{
       const name=normAuth(f.name),loginId=normAuth(f.loginId),pw=normAuth(f.pw),pw2=normAuth(f.pw2);
@@ -1887,10 +1890,10 @@ function renderModal(){
     const mf=m._f;
     return ov('사용자 수정',h('div',
       fg('이름',h('input',{className:'inp',value:mf.name,onInput:e=>{mf.name=e.target.value;}}),1),
-      fg('로그인 ID',h('input',{className:'inp',value:mf.loginId,onInput:e=>{mf.loginId=e.target.value;}}),1),
-      fg('이메일',h('input',{className:'inp',type:'email',value:mf.email,placeholder:'user@example.com',onInput:e=>{mf.email=e.target.value;}})),
-      fg('새 비밀번호',h('input',{className:'inp',type:'password',placeholder:'변경시에만 입력',onInput:e=>{mf.pw=e.target.value;}})),
-      fg('비밀번호 확인',h('input',{className:'inp',type:'password',placeholder:'새 비밀번호 다시 입력',onInput:e=>{mf.pw2=e.target.value;}})),
+      fg('로그인 ID',h('input',{className:'inp',value:mf.loginId,'data-lang':'en',autocomplete:'username',autocapitalize:'off',autocorrect:'off',onInput:engOnly(v=>{mf.loginId=v;})}),1),
+      fg('이메일',h('input',{className:'inp',type:'email',value:mf.email,placeholder:'user@example.com','data-lang':'en',onInput:e=>{mf.email=e.target.value;}})),
+      fg('새 비밀번호',h('input',{className:'inp',type:'password',placeholder:'변경시에만 입력','data-lang':'en',autocomplete:'new-password',autocapitalize:'off',onInput:engOnly(v=>{mf.pw=v;})})),
+      fg('비밀번호 확인',h('input',{className:'inp',type:'password',placeholder:'새 비밀번호 다시 입력','data-lang':'en',autocomplete:'new-password',autocapitalize:'off',onInput:engOnly(v=>{mf.pw2=v;})})),
       fg('권한',h('select',{className:'inp',onChange:e=>{mf.role=e.target.value;}},h('option',{value:'admin',selected:d.role==='admin'},'관리자'),h('option',{value:'sales',selected:d.role==='sales'},'영업담당자')))
     ),()=>{
       const name=normAuth(mf.name),loginId=normAuth(mf.loginId),pw=normAuth(mf.pw),pw2=normAuth(mf.pw2);
@@ -2258,6 +2261,19 @@ async function init(){
   render(); // shows login screen
 }
 init();
+// 포커스 시 IME 힌트:
+// - data-lang="en" 마킹된 필드 → 영문 전용 (한글 자동 제거는 engOnly 헬퍼로 처리)
+// - 그 외 텍스트 input / textarea → lang="ko" 힌트 (모바일 한글 키보드 우선)
+document.addEventListener('focusin',e=>{
+  const el=e.target;
+  if(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')return;
+  if(el.dataset.lang==='en'){el.lang='en';return;}
+  // 숫자·날짜·이메일 계열은 스킵
+  const t=el.type||'text';
+  if(['number','date','time','email','tel','url'].includes(t))return;
+  if(el.inputMode&&el.inputMode==='numeric')return;
+  el.lang='ko';
+});
 let _resizeT;window.addEventListener('resize',()=>{clearTimeout(_resizeT);_resizeT=setTimeout(()=>{
   if(!D.loggedIn||D.modal)return;
   // 모바일 가상 키보드로 인한 resize 시 패널·일반 입력 필드에 포커스 중이면 render() 생략
