@@ -4,12 +4,12 @@ const { google } = require('googleapis');
 // 시스템 필수 스코프 (login.js와 동일하게 유지)
 const REQUIRED_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/gmail.send',
 ];
 const SCOPE_LABELS = {
   'https://www.googleapis.com/auth/spreadsheets': 'Google Sheets (읽기/쓰기)',
-  'https://www.googleapis.com/auth/drive':        'Google Drive (파일 관리)',
+  'https://www.googleapis.com/auth/drive.file':   'Google Drive (파일 업로드/관리)',
   'https://www.googleapis.com/auth/gmail.send':   'Gmail (이메일 발송)',
 };
 
@@ -247,7 +247,7 @@ code{background:#0f0f12;border:1px solid #2d2d3a;padding:2px 6px;border-radius:4
   <p class="note">
     필요한 전체 스코프:<br>
     <code>https://www.googleapis.com/auth/spreadsheets</code><br>
-    <code>https://www.googleapis.com/auth/drive</code><br>
+    <code>https://www.googleapis.com/auth/drive.file</code><br>
     <code>https://www.googleapis.com/auth/gmail.send</code>
   </p>
 </div>

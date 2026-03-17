@@ -2,9 +2,11 @@
 const { google } = require('googleapis');
 
 // 시스템 전체에서 필요한 스코프 (Sheets + Drive + Gmail 통합)
+// drive.file: 앱이 생성한 파일/폴더만 접근 (Sensitive) — 미검증 앱 사용 가능
+// drive: 전체 Drive 접근 (Restricted) — Google 앱 검증 필요, 사용 불가
 const REQUIRED_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
-  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/gmail.send',
 ];
 
